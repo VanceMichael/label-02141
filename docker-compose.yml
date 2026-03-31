@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  frontend-editor:
+    build:
+      context: ./frontend-editor
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"
+    restart: unless-stopped

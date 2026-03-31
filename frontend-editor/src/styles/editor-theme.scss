@@ -1,0 +1,226 @@
+@use 'variables' as *;
+
+// === CodeMirror Shell ===
+.cm-editor {
+  height: 100%;
+  font-family: $font-body;
+  font-size: $fs-base;
+  line-height: $lh;
+
+  &.cm-focused { outline: none; }
+
+  .cm-scroller {
+    overflow-y: auto;
+    padding: $sp-8 $sp-5;
+    font-family: inherit;
+  }
+
+  .cm-content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0;
+    caret-color: $accent;
+  }
+
+  .cm-line { padding: 1px 0; }
+
+  .cm-cursor {
+    border-left: 1.8px solid $accent;
+  }
+
+  .cm-selectionBackground {
+    background: $accent-mid !important;
+  }
+  &.cm-focused .cm-selectionBackground {
+    background: $accent-mid !important;
+  }
+
+  .cm-activeLine {
+    background: rgba(0,0,0,0.015);
+  }
+
+  .cm-gutters { display: none; }
+}
+
+// === Headings ===
+.md-heading {
+  font-family: $font-ui;
+  font-weight: 700;
+  color: $text;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+
+  &--1 { font-size: 2.2em; margin: 0.6em 0 0.25em; }
+  &--2 { font-size: 1.65em; margin: 0.5em 0 0.2em; }
+  &--3 { font-size: 1.3em; margin: 0.4em 0 0.15em; }
+  &--4 { font-size: 1.1em; margin: 0.3em 0 0.1em; }
+  &--5 { font-size: 1em; }
+  &--6 { font-size: 0.95em; color: $text-2; }
+}
+
+.md-heading-mark {
+  color: $accent;
+  opacity: 0.35;
+  font-weight: 400;
+  font-family: $font-mono;
+  font-size: 0.65em;
+  vertical-align: middle;
+}
+
+// === Inline Formatting ===
+.md-bold { font-weight: 700; }
+.md-italic { font-style: italic; }
+.md-strikethrough {
+  text-decoration: line-through;
+  color: $text-3;
+}
+
+.md-inline-code {
+  font-family: $font-mono;
+  font-size: 0.88em;
+  background: $bg-code;
+  padding: 1px 5px;
+  border-radius: $r-sm;
+  color: $text-code;
+}
+
+// === Syntax Marks ===
+.md-syntax-hidden {
+  font-size: 0;
+  opacity: 0;
+  width: 0;
+  display: inline-block;
+  overflow: hidden;
+  transition: all $t-fast $ease;
+}
+
+.md-syntax-visible {
+  font-size: inherit;
+  opacity: 0.3;
+  font-family: $font-mono;
+  transition: all $t-fast $ease;
+}
+
+// === Code Block ===
+.md-code-block {
+  font-family: $font-mono;
+  font-size: $fs-sm;
+  background: $bg-code-block;
+  color: #d4d4d8;
+  border-radius: $r-lg;
+  padding: $sp-4;
+  margin: $sp-2 0;
+
+  .cm-line { padding: 0; }
+}
+
+// === Blockquote ===
+.md-blockquote {
+  border-left: 2px solid $accent;
+  padding-left: $sp-4;
+  color: $text-2;
+  margin: $sp-2 0;
+}
+
+.md-blockquote-mark {
+  color: $accent;
+  opacity: 0.3;
+}
+
+// === Link ===
+.md-link {
+  color: $accent;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color $t-fast $ease;
+  cursor: pointer;
+  &:hover { border-bottom-color: $accent; }
+}
+
+// === Image ===
+.md-image-widget {
+  display: block;
+  max-width: 100%;
+  margin: $sp-4 0;
+  border-radius: $r-md;
+  transition: box-shadow $t-normal $ease;
+  &:hover { box-shadow: $shadow-md; }
+}
+
+.md-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: $bg-code;
+  border: 1.5px dashed $border;
+  border-radius: $r-md;
+  padding: $sp-5;
+  color: $text-3;
+  font-size: $fs-sm;
+  min-height: 100px;
+  margin: $sp-2 0;
+  text-align: center;
+  line-height: 1.6;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  span {
+    word-break: break-all;
+  }
+}
+
+// === HR ===
+.md-hr {
+  border: none;
+  height: 1px;
+  background: $border;
+  margin: $sp-6 0;
+}
+
+// === List ===
+.md-list-marker {
+  color: $accent;
+  font-weight: 600;
+}
+
+// === Task Checkbox ===
+.md-task-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid $border;
+  border-radius: 3px;
+  margin-right: $sp-1;
+  vertical-align: middle;
+  transition: all $t-fast $ease;
+
+  &--checked {
+    background: $accent;
+    border-color: $accent;
+    color: #fff;
+    &::after { content: '✓'; font-size: 10px; }
+  }
+}
+
+// === Table ===
+.md-table-widget {
+  width: 100%;
+  border-collapse: collapse;
+  margin: $sp-4 0;
+  font-size: $fs-sm;
+
+  th, td {
+    border: 1px solid $border;
+    padding: $sp-2 $sp-3;
+    text-align: left;
+  }
+  th {
+    background: $bg;
+    font-weight: 600;
+  }
+}

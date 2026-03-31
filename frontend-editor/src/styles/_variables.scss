@@ -1,0 +1,65 @@
+// === Palette — warm neutral + single accent ===
+$accent: #2563eb;
+$accent-soft: rgba(37, 99, 235, 0.08);
+$accent-mid: rgba(37, 99, 235, 0.15);
+
+$bg: #fafaf9;
+$bg-editor: #ffffff;
+$bg-elevated: #ffffff;
+$bg-code: #f4f4f5;
+$bg-code-block: #18181b;
+
+$text: #1c1917;
+$text-2: #57534e;
+$text-3: #a8a29e;
+$text-code: #e879f9;
+
+$border: #e7e5e4;
+$border-light: #f5f5f4;
+
+$success: #16a34a;
+$warning: #d97706;
+$error: #dc2626;
+
+// === Typography ===
+$font-ui: 'Sora', system-ui, -apple-system, sans-serif;
+$font-body: 'Source Serif 4', 'Noto Serif SC', Georgia, serif;
+$font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+$fs-xs: 11px;
+$fs-sm: 13px;
+$fs-base: 16px;
+$fs-lg: 18px;
+
+$lh: 1.8;
+
+// === Spacing ===
+$sp-1: 4px;
+$sp-2: 8px;
+$sp-3: 12px;
+$sp-4: 16px;
+$sp-5: 24px;
+$sp-6: 32px;
+$sp-8: 48px;
+$sp-10: 64px;
+
+// === Radius ===
+$r-sm: 4px;
+$r-md: 6px;
+$r-lg: 10px;
+$r-full: 9999px;
+
+// === Shadows ===
+$shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+$shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+$shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+
+// === Motion ===
+$ease: cubic-bezier(0.4, 0, 0.2, 1);
+$t-fast: 0.12s;
+$t-normal: 0.2s;
+$t-slow: 0.3s;
+
+// === Z-index ===
+$z-toolbar: 100;
+$z-toast: 500;
