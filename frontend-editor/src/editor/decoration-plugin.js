@@ -133,6 +133,111 @@ class CheckboxWidget extends WidgetType {
   eq(other) { return other.checked === this.checked }
 }
 
+/**
+ * Table Widget — renders a markdown table with resizable columns
+ */
+class TableWidget extends WidgetType {
+  constructor(rows, separatorLine) {
+    super()
+    this.rows = rows
+    this.separatorLine = separatorLine
+    this.columnWidths = []
+  }
+
+  toDOM() {
+    const container = document.createElement('div')
+    container.className = 'md-table-container'
+
+    const table = document.createElement('table')
+    table.className = 'md-table-widget'
+
+    const validRows = this.rows.filter((_, i) => i !== this.separatorLine)
+
+    validRows.forEach((row, rowIndex) => {
+      const tr = document.createElement('tr')
+      const isHeader = rowIndex === 0
+
+      row.forEach((cell, cellIndex) => {
+        const td = document.createElement(isHeader ? 'th' : 'td')
+        td.textContent = cell
+        if (this.columnWidths[cellIndex]) {
+          td.style.width = this.columnWidths[cellIndex] + 'px'
+        }
+        tr.appendChild(td)
+
+        if (cellIndex < row.length - 1) {
+          const resizer = document.createElement('div')
+          resizer.className = 'md-table-resizer'
+          resizer.dataset.col = cellIndex
+          td.appendChild(resizer)
+        }
+      })
+
+      table.appendChild(tr)
+    })
+
+    container.appendChild(table)
+
+    let isResizing = false
+    let currentResizer = null
+    let startX = 0
+    let startWidth = 0
+    let currentCol = 0
+
+    const onMouseDown = (e) => {
+      const resizer = e.target.closest('.md-table-resizer')
+      if (!resizer) return
+
+      isResizing = true
+      currentResizer = resizer
+      currentCol = parseInt(resizer.dataset.col, 10)
+      startX = e.pageX
+
+      const th = table.querySelectorAll('th')[currentCol] || table.querySelectorAll('td')[currentCol]
+      if (th) {
+        startWidth = th.offsetWidth
+      }
+
+      document.addEventListener('mousemove', onMouseMove)
+      document.addEventListener('mouseup', onMouseUp)
+      e.preventDefault()
+    }
+
+    const onMouseMove = (e) => {
+      if (!isResizing) return
+      const dx = e.pageX - startX
+      const newWidth = Math.max(50, startWidth + dx)
+
+      const cells = table.querySelectorAll(`th:nth-child(${currentCol + 1}), td:nth-child(${currentCol + 1})`)
+      cells.forEach(cell => {
+        cell.style.width = newWidth + 'px'
+      })
+
+      this.columnWidths[currentCol] = newWidth
+    }
+
+    const onMouseUp = () => {
+      isResizing = false
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    }
+
+    container.addEventListener('mousedown', onMouseDown)
+
+    return container
+  }
+
+  ignoreEvent() { return false }
+
+  eq(other) {
+    if (other.rows.length !== this.rows.length) return false
+    for (let i = 0; i < this.rows.length; i++) {
+      if (JSON.stringify(this.rows[i]) !== JSON.stringify(other.rows[i])) return false
+    }
+    return other.separatorLine === this.separatorLine
+  }
+}
+
 // Decoration marks
 const headingDeco = (level) => Decoration.mark({ class: `md-heading md-heading--${level}` })
 const boldDeco = Decoration.mark({ class: 'md-bold' })
@@ -349,6 +454,19 @@ function buildDecorations(view) {
           decos.push({ from: firstLine.from, to: firstLine.to, deco: syntaxHiddenDeco })
           // Hide closing fence
           decos.push({ from: lastLine.from, to: lastLine.to, deco: syntaxHiddenDeco })
+        }
+        break
+      }
+
+      case 'table': {
+        if (!cursorOn) {
+          decos.push({
+            from: region.from,
+            to: region.to,
+            deco: Decoration.replace({
+              widget: new TableWidget(region.meta.rows, region.meta.separatorLine)
+            })
+          })
         }
         break
       }
