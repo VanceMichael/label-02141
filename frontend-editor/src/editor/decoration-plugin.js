@@ -133,6 +133,119 @@ class CheckboxWidget extends WidgetType {
   eq(other) { return other.checked === this.checked }
 }
 
+/**
+ * Table Widget — renders a markdown table with resizeable columns
+ */
+class TableWidget extends WidgetType {
+  constructor(header, alignments, rows) {
+    super()
+    this.header = header
+    this.alignments = alignments
+    this.rows = rows
+    this.columnWidths = new Array(header.length).fill(null)
+    this.resizing = null
+  }
+
+  toDOM() {
+    const wrapper = document.createElement('div')
+    wrapper.className = 'md-table-wrapper'
+
+    const table = document.createElement('table')
+    table.className = 'md-table-widget'
+
+    const thead = document.createElement('thead')
+    const headerRow = document.createElement('tr')
+
+    this.header.forEach((cell, idx) => {
+      const th = document.createElement('th')
+      th.textContent = cell
+      th.style.textAlign = this.alignments[idx] || 'left'
+      if (this.columnWidths[idx]) {
+        th.style.width = this.columnWidths[idx] + 'px'
+      }
+      th.dataset.colIndex = idx
+
+      if (idx < this.header.length - 1) {
+        const resizeHandle = document.createElement('div')
+        resizeHandle.className = 'md-table-resize-handle'
+        resizeHandle.dataset.colIndex = idx
+        this.setupResizeHandle(resizeHandle, th, idx)
+        th.appendChild(resizeHandle)
+      }
+
+      headerRow.appendChild(th)
+    })
+
+    thead.appendChild(headerRow)
+    table.appendChild(thead)
+
+    const tbody = document.createElement('tbody')
+    this.rows.forEach(row => {
+      const tr = document.createElement('tr')
+      row.forEach((cell, idx) => {
+        const td = document.createElement('td')
+        td.textContent = cell
+        td.style.textAlign = this.alignments[idx] || 'left'
+        if (this.columnWidths[idx]) {
+          td.style.width = this.columnWidths[idx] + 'px'
+        }
+        tr.appendChild(td)
+      })
+      tbody.appendChild(tr)
+    })
+
+    table.appendChild(tbody)
+    wrapper.appendChild(table)
+
+    return wrapper
+  }
+
+  setupResizeHandle(handle, headerCell, colIndex) {
+    let startX, startWidth, tableElement
+
+    const onMouseMove = (e) => {
+      if (!this.resizing) return
+      const diff = e.clientX - startX
+      const newWidth = Math.max(80, startWidth + diff)
+      this.columnWidths[colIndex] = newWidth
+
+      const cells = tableElement.querySelectorAll(`th[data-col-index="${colIndex}"], td:nth-child(${colIndex + 1})`)
+      cells.forEach(cell => {
+        cell.style.width = newWidth + 'px'
+      })
+    }
+
+    const onMouseUp = () => {
+      this.resizing = null
+      document.body.classList.remove('md-table-resizing')
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    }
+
+    handle.addEventListener('mousedown', (e) => {
+      e.preventDefault()
+      this.resizing = colIndex
+      startX = e.clientX
+      startWidth = headerCell.offsetWidth
+      tableElement = headerCell.closest('table')
+      document.body.classList.add('md-table-resizing')
+      document.addEventListener('mousemove', onMouseMove)
+      document.addEventListener('mouseup', onMouseUp)
+    })
+  }
+
+  ignoreEvent() { return false }
+
+  eq(other) {
+    return (
+      other instanceof TableWidget &&
+      JSON.stringify(other.header) === JSON.stringify(this.header) &&
+      JSON.stringify(other.rows) === JSON.stringify(this.rows) &&
+      JSON.stringify(other.alignments) === JSON.stringify(this.alignments)
+    )
+  }
+}
+
 // Decoration marks
 const headingDeco = (level) => Decoration.mark({ class: `md-heading md-heading--${level}` })
 const boldDeco = Decoration.mark({ class: 'md-bold' })
@@ -163,8 +276,13 @@ function getCursorLineRanges(state) {
 
 /**
  * Check if a region overlaps with any cursor line range.
+ * For tables, use a slightly smaller range so that cursor immediately after
+ * the last character of the table counts as "outside" the table.
  */
 function isCursorOnRegion(region, cursorRanges) {
+  if (region.type === 'table') {
+    return cursorRanges.some(cr => region.from <= cr.to && region.from < cr.to && region.to > cr.from)
+  }
   return cursorRanges.some(cr => region.from <= cr.to && region.to >= cr.from)
 }
 
@@ -350,6 +468,24 @@ function buildDecorations(view) {
           // Hide closing fence
           decos.push({ from: lastLine.from, to: lastLine.to, deco: syntaxHiddenDeco })
         }
+        break
+      }
+
+      case 'table': {
+        if (!cursorOn) {
+          const { header, alignments, rows } = region.meta
+          if (region.from < region.to) {
+            decos.push({
+              from: region.from,
+              to: region.to,
+              deco: Decoration.replace({
+                widget: new TableWidget(header, alignments, rows),
+                block: true
+              })
+            })
+          }
+        }
+        // When cursor is on it, show raw markdown syntax (no decoration needed)
         break
       }
     }
