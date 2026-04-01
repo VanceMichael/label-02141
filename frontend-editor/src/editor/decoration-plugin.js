@@ -133,6 +133,100 @@ class CheckboxWidget extends WidgetType {
   eq(other) { return other.checked === this.checked }
 }
 
+/**
+ * Table Widget — renders a visual table with resizable columns
+ */
+class TableWidget extends WidgetType {
+  constructor(headers, data) {
+    super()
+    this.headers = headers
+    this.data = data
+    this.columnWidths = headers.map(() => 150)
+  }
+
+  toDOM() {
+    const wrapper = document.createElement('div')
+    wrapper.className = 'md-table-wrapper'
+
+    const table = document.createElement('table')
+    table.className = 'md-table-widget'
+
+    const thead = document.createElement('thead')
+    const headerRow = document.createElement('tr')
+
+    this.headers.forEach((header, colIndex) => {
+      const th = document.createElement('th')
+      th.textContent = header
+      th.style.width = `${this.columnWidths[colIndex]}px`
+      th.style.position = 'relative'
+
+      const resizer = document.createElement('div')
+      resizer.className = 'md-table-resizer'
+      resizer.dataset.col = colIndex
+
+      let startX, startWidth
+      resizer.addEventListener('mousedown', (e) => {
+        e.preventDefault()
+        startX = e.pageX
+        startWidth = this.columnWidths[colIndex]
+        const onMouseMove = (e) => {
+          const diff = e.pageX - startX
+          this.columnWidths[colIndex] = Math.max(50, startWidth + diff)
+          th.style.width = `${this.columnWidths[colIndex]}px`
+          const rows = table.querySelectorAll('tr')
+          rows.forEach(row => {
+            const cell = row.children[colIndex]
+            if (cell) {
+              cell.style.width = `${this.columnWidths[colIndex]}px`
+            }
+          })
+        }
+        const onMouseUp = () => {
+          document.removeEventListener('mousemove', onMouseMove)
+          document.removeEventListener('mouseup', onMouseUp)
+        }
+        document.addEventListener('mousemove', onMouseMove)
+        document.addEventListener('mouseup', onMouseUp)
+      })
+
+      th.appendChild(resizer)
+      headerRow.appendChild(th)
+    })
+
+    thead.appendChild(headerRow)
+    table.appendChild(thead)
+
+    const tbody = document.createElement('tbody')
+    this.data.forEach(rowData => {
+      const tr = document.createElement('tr')
+      rowData.forEach((cell, colIndex) => {
+        const td = document.createElement('td')
+        td.textContent = cell
+        td.style.width = `${this.columnWidths[colIndex]}px`
+        tr.appendChild(td)
+      })
+      tbody.appendChild(tr)
+    })
+
+    table.appendChild(tbody)
+    wrapper.appendChild(table)
+
+    return wrapper
+  }
+
+  ignoreEvent(event) {
+    return event.type !== 'mousedown'
+  }
+
+  eq(other) {
+    return (
+      other instanceof TableWidget &&
+      JSON.stringify(other.headers) === JSON.stringify(this.headers) &&
+      JSON.stringify(other.data) === JSON.stringify(this.data)
+    )
+  }
+}
+
 // Decoration marks
 const headingDeco = (level) => Decoration.mark({ class: `md-heading md-heading--${level}` })
 const boldDeco = Decoration.mark({ class: 'md-bold' })
@@ -349,6 +443,20 @@ function buildDecorations(view) {
           decos.push({ from: firstLine.from, to: firstLine.to, deco: syntaxHiddenDeco })
           // Hide closing fence
           decos.push({ from: lastLine.from, to: lastLine.to, deco: syntaxHiddenDeco })
+        }
+        break
+      }
+
+      case 'table': {
+        if (!cursorOn) {
+          decos.push({
+            from: region.from,
+            to: region.to,
+            deco: Decoration.replace({
+              widget: new TableWidget(region.meta.headers, region.meta.data),
+              block: true
+            })
+          })
         }
         break
       }
