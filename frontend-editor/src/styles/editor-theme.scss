@@ -208,19 +208,65 @@
 }
 
 // === Table ===
+.md-table-container {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+  margin: $sp-4 0;
+}
+
 .md-table-widget {
   width: 100%;
   border-collapse: collapse;
-  margin: $sp-4 0;
   font-size: $fs-sm;
+  table-layout: fixed;
 
   th, td {
     border: 1px solid $border;
     padding: $sp-2 $sp-3;
     text-align: left;
+    position: relative;
+    word-wrap: break-word;
+    overflow: hidden;
   }
+
   th {
     background: $bg;
     font-weight: 600;
+  }
+
+  tr:hover td {
+    background: rgba($accent, 0.05);
+  }
+}
+
+.md-table-resizer {
+  position: absolute;
+  right: -5px;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+
+  &:hover {
+    background: rgba($accent, 0.2);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: $accent;
+    opacity: 0;
+    transition: opacity $t-fast $ease;
+  }
+
+  &:hover::before {
+    opacity: 1;
   }
 }

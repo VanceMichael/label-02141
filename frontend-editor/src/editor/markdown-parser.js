@@ -69,6 +69,54 @@ export function parseMarkdownRegions(doc) {
       continue
     }
 
+    // Table detection - simpler and more robust approach
+    if (i + 1 < lines.length) {
+      const line1 = line
+      const line2 = lines[i + 1]
+
+      const isLine1Table = /^\s*\|.*\|\s*$/.test(line1)
+      const isLine2Table = /^\s*\|.*\|\s*$/.test(line2)
+
+      if (isLine1Table && isLine2Table) {
+        const hasContent = /[a-zA-Z0-9\u4e00-\u9fa5]/.test(line2)
+        const hasDashes = /[-|]/.test(line2)
+
+        if (!hasContent && hasDashes) {
+          const tableRows = [parseTableRow(line1), parseTableRow(line2)]
+          let separatorLineIndex = 1
+          let tableEndLine = i + 1
+          let currentPos = lineEnd + 1
+
+          for (let j = i + 2; j < lines.length; j++) {
+            const nextLine = lines[j]
+            if (/^\s*\|.*\|\s*$/.test(nextLine)) {
+              tableRows.push(parseTableRow(nextLine))
+              tableEndLine = j
+              currentPos += nextLine.length + 1
+            } else {
+              break
+            }
+          }
+
+          const finalTableEndPos = currentPos - 1
+
+          if (tableRows.length >= 2) {
+            regions.push({
+              type: 'table',
+              from: lineStart,
+              to: finalTableEndPos,
+              contentFrom: lineStart,
+              contentTo: finalTableEndPos,
+              meta: { rows: tableRows, separatorLine: separatorLineIndex }
+            })
+            i = tableEndLine
+            pos = finalTableEndPos + 1
+            continue
+          }
+        }
+      }
+    }
+
     // Heading
     const headingMatch = line.match(/^(#{1,6})\s+(.+)$/)
     if (headingMatch) {
@@ -168,7 +216,29 @@ export function parseMarkdownRegions(doc) {
     pos = lineEnd + 1
   }
 
+  if (inTable && tableRows.length >= 2 && tableSeparatorLine !== -1) {
+    regions.push({
+      type: 'table',
+      from: tableStart,
+      to: pos - 1,
+      contentFrom: tableStart,
+      contentTo: pos - 1,
+      meta: { rows: tableRows, separatorLine: tableSeparatorLine }
+    })
+  }
+
   return regions
+}
+
+function isHeaderRow(line) {
+  return /[a-zA-Z0-9\u4e00-\u9fa5]/.test(line)
+}
+
+function parseTableRow(line) {
+  const trimmed = line.trim()
+  const withoutOuterPipes = trimmed.replace(/^\|/, '').replace(/\|$/, '')
+  const cells = withoutOuterPipes.split('|').map(cell => cell.trim())
+  return cells
 }
 
 function findCodeBlockStartLine(lines, codeBlockStart, currentPos) {

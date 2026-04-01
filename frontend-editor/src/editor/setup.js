@@ -39,15 +39,31 @@ greet('World')
 - [ ] Add more syntax support
 - [ ] Polish the UI
 
+### Tables
+
+Try resizing columns by dragging the dividers between cells!
+
+| Feature | Status | Priority | Notes |
+|---------|--------|----------|-------|
+| Markdown Parsing | ✅ Done | High | Core parser complete |
+| Live Rendering | ✅ Done | High | Widget-based rendering |
+| Table Support | ✅ Done | High | Resizable columns |
+| Code Highlighting | ✅ Done | Medium | Syntax highlighting |
+| Image Preview | ✅ Done | Medium | Image rendering |
+| Dark Mode | 🚧 In Progress | Low | Theme switch support |
+| Export to PDF | ⏳ Planned | Low | PDF generation |
+
+#### 另一个示例表格
+
+| 项目 | 描述 | 
+|------|------| 
+| 软件 | 《第一行代码》<br>《Android 开发艺术探索》 |
+
 ### Images
 
 ![Placeholder](https://via.placeholder.com/600x200/e8f0fe/1a73e8?text=MD+Live+Editor)
 
 ---
-
-### Table-like content
-
-The editor focuses on **inline rendering** — what you see is what you get, but you can always click to edit the raw markdown.
 
 Happy writing! ✨
 `
