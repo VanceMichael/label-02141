@@ -45,9 +45,23 @@ greet('World')
 
 ---
 
-### Table-like content
+### Tables
 
-The editor focuses on **inline rendering** — what you see is what you get, but you can always click to edit the raw markdown.
+Click anywhere on the table below to edit the raw markdown syntax. Click outside to see it render as a beautiful table. Hover over column borders to drag and resize!
+
+| Feature | Status | Priority | Assignee | Due Date |
+|---------|:------:|:---------|:---------|:---------|
+| Table rendering | ✅ Done | High | Team A | 2024-03-31 |
+| Column resize | ✅ Done | High | Team A | 2024-04-15 |
+| Syntax highlighting | 🚧 In Progress | Medium | Team B | 2024-04-30 |
+| Export to PDF | 📋 Planned | Low | Team C | 2024-05-15 |
+| Dark mode | 📋 Planned | Medium | Team B | 2024-06-01 |
+
+> **Tip:** Move your cursor **inside** the table area to see the Markdown syntax. Move it **outside** to see the clean, rendered table with resizable columns!
+
+---
+
+The editor focuses on **live rendering** — what you see is what you get, but you can always click to edit the raw markdown.
 
 Happy writing! ✨
 `

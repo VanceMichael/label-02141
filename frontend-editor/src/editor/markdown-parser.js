@@ -31,11 +31,67 @@ export function parseMarkdownRegions(doc) {
   let codeBlockStart = -1
   let codeBlockLang = ''
   let codeBlockMarkerLen = 0
+  let inTable = false
+  let tableStart = -1
+  let tableHeader = null
+  let tableAlignments = []
+  let tableRows = []
+  let lastTableRowEnd = -1
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
     const lineStart = pos
     const lineEnd = pos + line.length
+
+    // === Table Detection ===
+    // Check if line looks like a table row (contains pipes)
+    const isTableRow = line.includes('|') && line.trim().length > 0
+    const isSeparatorRow = /^\s*\|?\s*(:?-+:?\s*\|)+\s*$/.test(line.trim())
+
+    // Start table detection: when we find a pipe-containing line followed by a separator
+    if (!inTable && !inCodeBlock && isTableRow && i + 1 < lines.length) {
+      const nextLine = lines[i + 1]
+      if (/^\s*\|?\s*(:?-+:?\s*\|)+\s*$/.test(nextLine.trim())) {
+        inTable = true
+        tableStart = lineStart
+        tableHeader = parseTableRow(line)
+        tableAlignments = parseTableAlignments(nextLine)
+        tableRows = []
+        lastTableRowEnd = lineStart + line.length + 1 + nextLine.length // Include separator row
+        i += 1 // Skip separator line
+        pos = pos + line.length + 1 + nextLine.length + 1
+        continue
+      }
+    }
+
+    // Continue collecting table rows
+    if (inTable && !inCodeBlock) {
+      if (isTableRow && line.trim().length > 0) {
+        tableRows.push(parseTableRow(line))
+        lastTableRowEnd = lineEnd
+        pos = lineEnd + 1
+        continue
+      } else {
+        // End of table
+        regions.push({
+          type: 'table',
+          from: tableStart,
+          to: lastTableRowEnd,
+          contentFrom: tableStart,
+          contentTo: lastTableRowEnd,
+          meta: {
+            header: tableHeader,
+            alignments: tableAlignments,
+            rows: tableRows
+          }
+        })
+        inTable = false
+        tableStart = -1
+        tableHeader = null
+        tableAlignments = []
+        tableRows = []
+      }
+    }
 
     // Code block fences
     const fenceMatch = line.match(/^(`{3,}|~{3,})(.*)$/)
@@ -168,6 +224,22 @@ export function parseMarkdownRegions(doc) {
     pos = lineEnd + 1
   }
 
+  // Handle table at end of document
+  if (inTable) {
+    regions.push({
+      type: 'table',
+      from: tableStart,
+      to: lastTableRowEnd,
+      contentFrom: tableStart,
+      contentTo: lastTableRowEnd,
+      meta: {
+        header: tableHeader,
+        alignments: tableAlignments,
+        rows: tableRows
+      }
+    })
+  }
+
   return regions
 }
 
@@ -267,6 +339,37 @@ function parseInlineRegions(line, lineStart, regions) {
       meta: { markerLen }
     })
   }
+}
+
+/**
+ * Parse a markdown table row into cell array.
+ * Handles both | a | b | c | and a | b | c formats.
+ * @param {string} line 
+ * @returns {string[]}
+ */
+function parseTableRow(line) {
+  let trimmed = line.trim()
+  if (trimmed.startsWith('|')) trimmed = trimmed.slice(1)
+  if (trimmed.endsWith('|')) trimmed = trimmed.slice(0, -1)
+  return trimmed.split('|').map(cell => cell.trim())
+}
+
+/**
+ * Parse table separator row to determine column alignments.
+ * :--- = left, ---: = right, :---: = center
+ * @param {string} line 
+ * @returns {string[]}
+ */
+function parseTableAlignments(line) {
+  let trimmed = line.trim()
+  if (trimmed.startsWith('|')) trimmed = trimmed.slice(1)
+  if (trimmed.endsWith('|')) trimmed = trimmed.slice(0, -1)
+  return trimmed.split('|').map(sep => {
+    const s = sep.trim()
+    if (s.startsWith(':') && s.endsWith(':')) return 'center'
+    if (s.endsWith(':')) return 'right'
+    return 'left'
+  })
 }
 
 /**
