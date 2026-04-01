@@ -31,6 +31,10 @@ export function parseMarkdownRegions(doc) {
   let codeBlockStart = -1
   let codeBlockLang = ''
   let codeBlockMarkerLen = 0
+  let inTable = false
+  let tableStart = -1
+  let tableRows = []
+  let tableHasSeparator = false
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
@@ -67,6 +71,40 @@ export function parseMarkdownRegions(doc) {
     if (inCodeBlock) {
       pos = lineEnd + 1
       continue
+    }
+
+    // Table detection
+    const isTableRow = /^\s*\|.*\|\s*$/.test(line)
+    const isSeparatorRow = /^\s*\|?(\s*[-:]+\s*\|)+\s*[-:]*\s*\|?\s*$/.test(line)
+
+    if (isTableRow || isSeparatorRow) {
+      if (!inTable) {
+        inTable = true
+        tableStart = lineStart
+        tableRows = []
+        tableHasSeparator = false
+      }
+      if (isSeparatorRow) {
+        tableHasSeparator = true
+      }
+      tableRows.push({ line, lineStart, lineEnd, isSeparator: isSeparatorRow })
+    } else if (inTable) {
+      if (tableRows.length >= 2 && tableHasSeparator) {
+        const headers = parseTableRow(tableRows[0].line)
+        const data = tableRows.slice(2).map(r => parseTableRow(r.line))
+        regions.push({
+          type: 'table',
+          from: tableStart,
+          to: tableRows[tableRows.length - 1].lineEnd,
+          contentFrom: tableStart,
+          contentTo: tableRows[tableRows.length - 1].lineEnd,
+          meta: { headers, data, rows: tableRows }
+        })
+      }
+      inTable = false
+      tableStart = -1
+      tableRows = []
+      tableHasSeparator = false
     }
 
     // Heading
@@ -166,6 +204,22 @@ export function parseMarkdownRegions(doc) {
     parseInlineRegions(line, lineStart, regions)
 
     pos = lineEnd + 1
+  }
+
+  // Handle table at end of document
+  if (inTable) {
+    if (tableRows.length >= 2 && tableHasSeparator) {
+      const headers = parseTableRow(tableRows[0].line)
+      const data = tableRows.slice(2).map(r => parseTableRow(r.line))
+      regions.push({
+        type: 'table',
+        from: tableStart,
+        to: tableRows[tableRows.length - 1].lineEnd,
+        contentFrom: tableStart,
+        contentTo: tableRows[tableRows.length - 1].lineEnd,
+        meta: { headers, data, rows: tableRows }
+      })
+    }
   }
 
   return regions
@@ -286,6 +340,15 @@ export function regionAtPos(regions, pos) {
  * @param {number} lineTo
  * @returns {boolean}
  */
+function parseTableRow(line) {
+  return line
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map(cell => cell.trim())
+}
+
 export function cursorOnRegion(region, lineFrom, lineTo) {
   return region.from <= lineTo && region.to >= lineFrom
 }

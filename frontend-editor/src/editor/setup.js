@@ -45,9 +45,17 @@ greet('World')
 
 ---
 
-### Table-like content
+### Tables with Live Editing
 
-The editor focuses on **inline rendering** — what you see is what you get, but you can always click to edit the raw markdown.
+Click anywhere in the table below to edit the raw markdown syntax. Click outside to see the rendered table with resizable columns. Try dragging the column borders!
+
+| Feature          | Status      | Notes                          |
+|------------------|-------------|--------------------------------|
+| Live Rendering   | ✅ Done     | Click to edit, blur to render  |
+| Column Resizing  | ✅ Done     | Drag column borders to resize  |
+| Multi-row Support| ✅ Done     | Supports 5+ rows               |
+| Multi-col Support| ✅ Done     | Supports 3+ columns            |
+| Syntax Highlight | ✅ Done     | Full markdown syntax support   |
 
 Happy writing! ✨
 `
